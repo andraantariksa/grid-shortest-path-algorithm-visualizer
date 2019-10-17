@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gotk3/gotk3/cairo"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 )
@@ -37,12 +38,42 @@ func main() {
 		builder.ConnectSignals(signals)
 
 		// Get the object with the id of "main_window".
-		obj, err := builder.GetObject("main_window")
+		window_obj, err := builder.GetObject("main_window")
 		errorCheck(err)
 
 		// Verify that the object is a pointer to a gtk.ApplicationWindow.
-		win, err := isWindow(obj)
+		win, err := isWindow(window_obj)
 		errorCheck(err)
+
+		/////////////////////////////////
+
+		drawing_area_obj, err := builder.GetObject("graph_drawing_area")
+		errorCheck(err)
+
+		drawing_area, err := isDrawingArea(drawing_area_obj)
+		errorCheck(err)
+
+		drawing_area.Connect("draw", func(da *gtk.DrawingArea, cr *cairo.Context) {
+			for y := 0.0; y < 15.0; y += 1.0 {
+				for x := 0.0; x < 15.0; x += 1.0 {
+					cr.SetSourceRGB(94, 184, 255)
+					cr.Rectangle(25.0*x, 25.0*y, 25.0, 25.0)
+					cr.Fill()
+				}
+			}
+		})
+
+		drawing_area.Connect("click", func(da *gtk.DrawingArea, cr *cairo.Context) {
+			for y := 0.0; y < 15.0; y += 1.0 {
+				for x := 0.0; x < 15.0; x += 1.0 {
+					cr.SetSourceRGB(94, 184, 255)
+					cr.Rectangle(25.0*x, 25.0*y, 25.0, 25.0)
+					cr.Fill()
+				}
+			}
+		})
+
+		/////////////////////////////////
 
 		// Show the Window and all of its components.
 		win.Show()
@@ -51,7 +82,7 @@ func main() {
 
 	// Connect function to application shutdown event, this is not required.
 	application.Connect("shutdown", func() {
-		log.Println("application shutdown")
+		log.Println("application closed")
 	})
 
 	// Launch the application
@@ -64,6 +95,14 @@ func isWindow(obj glib.IObject) (*gtk.ApplicationWindow, error) {
 		return win, nil
 	}
 	return nil, errors.New("not a *gtk.Window")
+}
+
+func isDrawingArea(obj glib.IObject) (*gtk.DrawingArea, error) {
+	// Make type assertion (as per gtk.go).
+	if win, ok := obj.(*gtk.DrawingArea); ok {
+		return win, nil
+	}
+	return nil, errors.New("not a *gtk.DrawingArea")
 }
 
 func errorCheck(e error) {

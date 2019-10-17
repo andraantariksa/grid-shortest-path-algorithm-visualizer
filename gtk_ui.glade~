@@ -81,19 +81,6 @@
           <object class="GtkFixed">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <child>
-              <object class="GtkLabel">
-                <property name="width_request">100</property>
-                <property name="height_request">80</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Bruh</property>
-              </object>
-              <packing>
-                <property name="x">31</property>
-                <property name="y">16</property>
-              </packing>
-            </child>
           </object>
           <packing>
             <property name="left_attach">2</property>
