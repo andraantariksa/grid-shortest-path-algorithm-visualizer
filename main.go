@@ -13,6 +13,13 @@ import (
 
 const appID = "io.gitlab.andraantariksa.grid-shortest-path-algorithm-visualizer"
 
+type BoxState int32
+
+const (
+	BOX_STATE_EMPTY BoxState = 0
+	BOX_STATE_WALL  BoxState = 1
+)
+
 func main() {
 	// Create a new application.
 	application, err := gtk.ApplicationNew(appID, glib.APPLICATION_FLAGS_NONE)
@@ -39,47 +46,87 @@ func main() {
 		builder.ConnectSignals(signals)
 
 		// Get the object with the id of "main_window".
-		window_obj, err := builder.GetObject("main_window")
+		winObj, err := builder.GetObject("application_window_main")
 		errorCheck(err)
 
 		// Verify that the object is a pointer to a gtk.ApplicationWindow.
-		win, err := isWindow(window_obj)
+		win, err := isWindow(winObj)
 		errorCheck(err)
 
 		// Show the Window and all of its components.
 		win.Show()
 		application.AddWindow(win)
 
-		/////////////////////////////////
+		aboutDialogObj, _ := builder.GetObject("about_dialog")
+		aboutDialog := aboutDialogObj.(*gtk.AboutDialog)
 
-		drawing_area_obj, err := builder.GetObject("graph_drawing_area")
+		modelButtonAboutObj, _ := builder.GetObject("model_button_about")
+		modelButtonAbout := modelButtonAboutObj.(*gtk.ModelButton)
+
+		modelButtonAbout.Connect("clicked", func() {
+			aboutDialog.Show()
+		})
+
+		windowPreferencesObj, _ := builder.GetObject("window_preferences")
+		windowPreferences := windowPreferencesObj.(*gtk.Window)
+
+		modelButtonPreferencesObj, _ := builder.GetObject("model_button_preferences")
+		modelButtonPreferences := modelButtonPreferencesObj.(*gtk.ModelButton)
+
+		modelButtonPreferences.Connect("clicked", func() {
+			windowPreferences.Show()
+		})
+
+		drawingAreaObj, err := builder.GetObject("drawing_area_grid")
 		errorCheck(err)
 
-		drawing_area, err := isDrawingArea(drawing_area_obj)
+		drawingArea, err := isDrawingArea(drawingAreaObj)
 		errorCheck(err)
 
-		drawing_area.Connect("draw", func(da *gtk.DrawingArea, cr *cairo.Context) {
-			for y := 0.0; y < 15.0; y += 1.0 {
-				for x := 0.0; x < 15.0; x += 1.0 {
-					cr.SetSourceRGB(94, 184, 255)
-					cr.Rectangle(25.0*x, 25.0*y, 25.0, 25.0)
+		boxSize := 25.0
+
+		boxState := [15][15]BoxState{}
+		for y := 0; y < 15; y++ {
+			for x := 0; x < 15; x++ {
+				boxState[y][x] = BOX_STATE_EMPTY
+			}
+		}
+
+		drawingArea.Connect("draw", func(da *gtk.DrawingArea, cr *cairo.Context) {
+			for y := 0; y < 15; y++ {
+				for x := 0; x < 15; x++ {
+					switch boxState[y][x] {
+					case BOX_STATE_EMPTY:
+						cr.SetSourceRGB(255, 255, 255)
+					case BOX_STATE_WALL:
+						cr.SetSourceRGB(0, 0, 0)
+					}
+					cr.Rectangle(boxSize*float64(x), boxSize*float64(y), boxSize, boxSize)
 					cr.Fill()
 				}
 			}
 		})
 
-		drawing_area.Widget.AddEvents(int(gdk.BUTTON_PRESS_MASK))
-		drawing_area.Connect("button-press-event", func(da *gtk.DrawingArea, ev *gdk.Event) {
-			log.Println("bruh")
+		drawingArea.Widget.AddEvents(int(gdk.BUTTON_PRESS_MASK))
+		drawingArea.Connect("button-press-event", func(da *gtk.DrawingArea, event *gdk.Event) {
+			eventMotion := gdk.EventMotionNewFromEvent(event)
+			posX, posY := eventMotion.MotionVal()
+			boxPosX := int(posX / boxSize)
+			boxPosY := int(posY / boxSize)
+			boxState[boxPosY][boxPosX] = BOX_STATE_WALL
+
+			eventButton := gdk.EventButtonNewFromEvent(event)
+			buttonPressed := eventButton.ButtonVal()
+
+			switch buttonPressed {
+			case 1:
+				boxState[boxPosY][boxPosX] = BOX_STATE_WALL
+			case 3:
+				boxState[boxPosY][boxPosX] = BOX_STATE_EMPTY
+			}
+
+			win.QueueDraw()
 		})
-
-		// eventBoxObj, err := builder.GetObject("event_box")
-		// eventBox := eventBoxObj.(*gtk.EventBox)
-
-		// eventBox.Widget.AddEvents(int(gdk.BUTTON_PRESS_MASK))
-		// eventBox.Connect("button-press-event", func(bo *gtk.EventBox, ev *gdk.Event) {
-		// 	log.Println(bo.Show()
-		// })
 	})
 
 	// Connect function to application shutdown event, this is not required.
