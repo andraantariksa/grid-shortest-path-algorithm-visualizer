@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gotk3/gotk3/cairo"
+	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 )
@@ -45,6 +46,10 @@ func main() {
 		win, err := isWindow(window_obj)
 		errorCheck(err)
 
+		// Show the Window and all of its components.
+		win.Show()
+		application.AddWindow(win)
+
 		/////////////////////////////////
 
 		drawing_area_obj, err := builder.GetObject("graph_drawing_area")
@@ -63,21 +68,18 @@ func main() {
 			}
 		})
 
-		drawing_area.Connect("click", func(da *gtk.DrawingArea, cr *cairo.Context) {
-			for y := 0.0; y < 15.0; y += 1.0 {
-				for x := 0.0; x < 15.0; x += 1.0 {
-					cr.SetSourceRGB(94, 184, 255)
-					cr.Rectangle(25.0*x, 25.0*y, 25.0, 25.0)
-					cr.Fill()
-				}
-			}
+		drawing_area.Widget.AddEvents(int(gdk.BUTTON_PRESS_MASK))
+		drawing_area.Connect("button-press-event", func(da *gtk.DrawingArea, ev *gdk.Event) {
+			log.Println("bruh")
 		})
 
-		/////////////////////////////////
+		// eventBoxObj, err := builder.GetObject("event_box")
+		// eventBox := eventBoxObj.(*gtk.EventBox)
 
-		// Show the Window and all of its components.
-		win.Show()
-		application.AddWindow(win)
+		// eventBox.Widget.AddEvents(int(gdk.BUTTON_PRESS_MASK))
+		// eventBox.Connect("button-press-event", func(bo *gtk.EventBox, ev *gdk.Event) {
+		// 	log.Println(bo.Show()
+		// })
 	})
 
 	// Connect function to application shutdown event, this is not required.
