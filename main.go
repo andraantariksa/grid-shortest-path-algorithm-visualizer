@@ -9,16 +9,11 @@ import (
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
+
+	"gitlab.com/andraantariksa/grid-shortest-path-visualizer/grid"
 )
 
 const appID = "io.gitlab.andraantariksa.grid-shortest-path-algorithm-visualizer"
-
-type BoxState int32
-
-const (
-	BOX_STATE_EMPTY BoxState = 0
-	BOX_STATE_WALL  BoxState = 1
-)
 
 func main() {
 	// Create a new application.
@@ -85,21 +80,28 @@ func main() {
 
 		boxSize := 25.0
 
-		boxState := [15][15]BoxState{}
-		for y := 0; y < 15; y++ {
-			for x := 0; x < 15; x++ {
-				boxState[y][x] = BOX_STATE_EMPTY
+		boxState := [16][16]grid.BoxState{}
+		for y := 0; y < 16; y++ {
+			for x := 0; x < 16; x++ {
+				boxState[y][x] = grid.BOX_STATE_EMPTY
 			}
 		}
 
+		boxState[0][0] = grid.BOX_STATE_START
+		boxState[15][15] = grid.BOX_STATE_END
+
 		drawingArea.Connect("draw", func(da *gtk.DrawingArea, cr *cairo.Context) {
-			for y := 0; y < 15; y++ {
-				for x := 0; x < 15; x++ {
+			for y := 0; y < 16; y++ {
+				for x := 0; x < 16; x++ {
 					switch boxState[y][x] {
-					case BOX_STATE_EMPTY:
-						cr.SetSourceRGB(255, 255, 255)
-					case BOX_STATE_WALL:
-						cr.SetSourceRGB(0, 0, 0)
+					case grid.BOX_STATE_EMPTY:
+						cr.SetSourceRGB(1.0, 1.0, 1.0)
+					case grid.BOX_STATE_START:
+						cr.SetSourceRGB(0, 0.84, 1.0)
+					case grid.BOX_STATE_END:
+						cr.SetSourceRGB(0.21, 0.28, 0.7)
+					case grid.BOX_STATE_WALL:
+						cr.SetSourceRGB(0.0, 0.0, 0.0)
 					}
 					cr.Rectangle(boxSize*float64(x), boxSize*float64(y), boxSize, boxSize)
 					cr.Fill()
@@ -113,16 +115,16 @@ func main() {
 			posX, posY := eventMotion.MotionVal()
 			boxPosX := int(posX / boxSize)
 			boxPosY := int(posY / boxSize)
-			boxState[boxPosY][boxPosX] = BOX_STATE_WALL
+			boxState[boxPosY][boxPosX] = grid.BOX_STATE_WALL
 
 			eventButton := gdk.EventButtonNewFromEvent(event)
 			buttonPressed := eventButton.ButtonVal()
 
 			switch buttonPressed {
 			case 1:
-				boxState[boxPosY][boxPosX] = BOX_STATE_WALL
+				boxState[boxPosY][boxPosX] = grid.BOX_STATE_WALL
 			case 3:
-				boxState[boxPosY][boxPosX] = BOX_STATE_EMPTY
+				boxState[boxPosY][boxPosX] = grid.BOX_STATE_EMPTY
 			}
 
 			win.QueueDraw()
