@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/gotk3/gotk3/cairo"
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
@@ -20,14 +19,9 @@ func main() {
 	application, err := gtk.ApplicationNew(appID, glib.APPLICATION_FLAGS_NONE)
 	errorCheck(err)
 
-	// Connect function to application startup event, this is not required.
-	application.Connect("startup", func() {
-		log.Println("application startup")
-	})
-
 	// Connect function to application activate event
 	application.Connect("activate", func() {
-		log.Println("application activate")
+		log.Println("application activated")
 
 		// Get the GtkBuilder UI definition in the glade file.
 		builder, err := gtk.BuilderNewFromFile("gtk_ui.glade")
@@ -78,57 +72,17 @@ func main() {
 		drawingArea, err := isDrawingArea(drawingAreaObj)
 		errorCheck(err)
 
-		boxSize := 25.0
+		grd := grid.New(win)
 
-		boxState := [16][16]grid.BoxState{}
-		for y := 0; y < 16; y++ {
-			for x := 0; x < 16; x++ {
-				boxState[y][x] = grid.BOX_STATE_EMPTY
-			}
-		}
+		grd.SetStart(0, 0)
+		grd.SetEnd(15, 15)
 
-		boxState[0][0] = grid.BOX_STATE_START
-		boxState[15][15] = grid.BOX_STATE_END
-
-		drawingArea.Connect("draw", func(da *gtk.DrawingArea, cr *cairo.Context) {
-			for y := 0; y < 16; y++ {
-				for x := 0; x < 16; x++ {
-					switch boxState[y][x] {
-					case grid.BOX_STATE_EMPTY:
-						cr.SetSourceRGB(1.0, 1.0, 1.0)
-					case grid.BOX_STATE_START:
-						cr.SetSourceRGB(0, 0.84, 1.0)
-					case grid.BOX_STATE_END:
-						cr.SetSourceRGB(0.21, 0.28, 0.7)
-					case grid.BOX_STATE_WALL:
-						cr.SetSourceRGB(0.0, 0.0, 0.0)
-					}
-					cr.Rectangle(boxSize*float64(x), boxSize*float64(y), boxSize, boxSize)
-					cr.Fill()
-				}
-			}
-		})
+		drawingArea.Connect("draw", grd.Draw)
 
 		drawingArea.Widget.AddEvents(int(gdk.BUTTON_PRESS_MASK))
-		drawingArea.Connect("button-press-event", func(da *gtk.DrawingArea, event *gdk.Event) {
-			eventMotion := gdk.EventMotionNewFromEvent(event)
-			posX, posY := eventMotion.MotionVal()
-			boxPosX := int(posX / boxSize)
-			boxPosY := int(posY / boxSize)
-			boxState[boxPosY][boxPosX] = grid.BOX_STATE_WALL
+		drawingArea.Connect("button-press-event", grd.BoxPressed)
 
-			eventButton := gdk.EventButtonNewFromEvent(event)
-			buttonPressed := eventButton.ButtonVal()
-
-			switch buttonPressed {
-			case 1:
-				boxState[boxPosY][boxPosX] = grid.BOX_STATE_WALL
-			case 3:
-				boxState[boxPosY][boxPosX] = grid.BOX_STATE_EMPTY
-			}
-
-			win.QueueDraw()
-		})
+		log.Println(grd.SolveBFS())
 	})
 
 	// Connect function to application shutdown event, this is not required.

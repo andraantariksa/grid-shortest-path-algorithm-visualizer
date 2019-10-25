@@ -1,4 +1,2 @@
-github.com/Workiva/go-datastructures v1.0.50 h1:slDmfW6KCHcC7U+LP3DDBbm4fqTwZGn1beOFPfGaLvo=
-github.com/Workiva/go-datastructures v1.0.50/go.mod h1:Z+F2Rca0qCsVYDS8z7bAGm8f3UkzuWYS/oBZz5a7VVA=
 github.com/gotk3/gotk3 v0.0.0-20191010201156-711c17fcaec0 h1:W3j2NfHLKn7Etm9HlqGCMpsIxk9VFpYmrh7TchldFSk=
 github.com/gotk3/gotk3 v0.0.0-20191010201156-711c17fcaec0/go.mod h1:Eew3QBwAOBTrfFFDmsDE5wZWbcagBL1NUslj1GhRveo=
